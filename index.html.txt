@@ -1,0 +1,1669 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Битва Шаров - Epic Battle Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 900px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            background: linear-gradient(45deg, #ffcc00, #ff9500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: titleGlow 3s infinite alternate;
+        }
+        
+        @keyframes titleGlow {
+            0% { filter: drop-shadow(0 0 5px rgba(255, 204, 0, 0.7)); }
+            100% { filter: drop-shadow(0 0 15px rgba(255, 149, 0, 0.9)); }
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        
+        /* Стили для экрана выбора */
+        .selection-screen {
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            animation: screenPulse 4s infinite;
+            width: 100%;
+        }
+        
+        @keyframes screenPulse {
+            0% { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+            50% { box-shadow: 0 10px 40px rgba(255, 204, 0, 0.3); }
+            100% { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+        }
+        
+        .instructions {
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+            line-height: 1.5;
+        }
+        
+        .balls-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .ball-option {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .ball-option:before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: linear-gradient(45deg, #ffcc00, #ff9500, #ffcc00);
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .ball-option:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .ball-option:hover:before {
+            opacity: 0.3;
+        }
+        
+        .ball-option.selected {
+            border-color: #ffcc00;
+            box-shadow: 0 0 15px #ffcc00;
+            animation: selectedPulse 1.5s infinite;
+        }
+        
+        @keyframes selectedPulse {
+            0% { box-shadow: 0 0 15px #ffcc00; }
+            50% { box-shadow: 0 0 25px #ffcc00; }
+            100% { box-shadow: 0 0 15px #ffcc00; }
+        }
+        
+        .ball-preview {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+            position: relative;
+            transition: transform 0.5s;
+        }
+        
+        .ball-preview.rotating {
+            animation: rotateBall 3s infinite linear;
+        }
+        
+        @keyframes rotateBall {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .sword-ball {
+            background: linear-gradient(135deg, #ff6b6b, #c23636);
+            box-shadow: 0 5px 15px rgba(194, 54, 54, 0.5);
+        }
+        
+        .spear-ball {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            box-shadow: 0 5px 15px rgba(0, 242, 254, 0.5);
+        }
+        
+        .hands-ball {
+            background: linear-gradient(135deg, #43e97b, #38f9d7);
+            box-shadow: 0 5px 15px rgba(67, 233, 123, 0.5);
+        }
+        
+        .mage-ball {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+            box-shadow: 0 5px 15px rgba(142, 68, 173, 0.5);
+        }
+        
+        .titan-ball {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            box-shadow: 0 5px 15px rgba(44, 62, 80, 0.7);
+        }
+        
+        .necromancer-ball {
+            background: linear-gradient(135deg, #16a085, #1abc9c);
+            box-shadow: 0 5px 15px rgba(22, 160, 133, 0.7);
+        }
+        
+        .warrior-ball {
+            background: linear-gradient(135deg, #ff9500, #ff3300);
+            box-shadow: 0 5px 15px rgba(255, 149, 0, 0.7);
+        }
+        
+        .weapon-icon {
+            font-size: 50px;
+            filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.7));
+        }
+        
+        .fireball-preview {
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle, #ff9500, #ff3300);
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(255, 149, 0, 0.7);
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        .ball-name {
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .ball-stats {
+            font-size: 1rem;
+            opacity: 0.8;
+            text-align: center;
+            line-height: 1.4;
+        }
+        
+        .start-btn {
+            background: linear-gradient(135deg, #ffcc00, #ff9500);
+            border: none;
+            border-radius: 50px;
+            color: #333;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 15px 40px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(255, 204, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .start-btn:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s;
+        }
+        
+        .start-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 7px 20px rgba(255, 204, 0, 0.6);
+        }
+        
+        .start-btn:hover:before {
+            left: 100%;
+        }
+        
+        .start-btn:disabled {
+            background: #666;
+            color: #999;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .start-btn:disabled:before {
+            display: none;
+        }
+        
+        /* Стили для игрового поля */
+        .game-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        
+        .arena-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .arena {
+            width: 600px;
+            height: 600px;
+            max-width: 95vw;
+            max-height: 95vw;
+            background: rgba(0, 0, 0, 0.3);
+            border: 3px solid white;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        .health-bars {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .health-bar {
+            flex: 1;
+            min-width: 280px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .health-fill {
+            height: 100%;
+            border-radius: 15px;
+            transition: width 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .health-fill:after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: healthShine 2s infinite;
+        }
+        
+        @keyframes healthShine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .health-fill.sword {
+            background: linear-gradient(90deg, #ff6b6b, #c23636);
+        }
+        
+        .health-fill.spear {
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+        }
+        
+        .health-fill.hands {
+            background: linear-gradient(90deg, #43e97b, #38f9d7);
+        }
+        
+        .health-fill.mage {
+            background: linear-gradient(90deg, #9b59b6, #8e44ad);
+        }
+        
+        .health-fill.titan {
+            background: linear-gradient(90deg, #2c3e50, #34495e);
+        }
+        
+        .health-fill.necromancer {
+            background: linear-gradient(90deg, #16a085, #1abc9c);
+        }
+        
+        .health-fill.warrior {
+            background: linear-gradient(90deg, #ff9500, #ff3300);
+        }
+        
+        .health-text {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+            font-size: 0.9rem;
+        }
+        
+        .ball {
+            position: absolute;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+            transition: transform 0.1s;
+            font-size: 24px;
+        }
+        
+        .ball.rotating {
+            animation: ballRotate 3s infinite linear;
+        }
+        
+        @keyframes ballRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .sword {
+            background: linear-gradient(135deg, #ff6b6b, #c23636);
+            box-shadow: 0 0 10px rgba(194, 54, 54, 0.7);
+        }
+        
+        .spear {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            box-shadow: 0 0 10px rgba(0, 242, 254, 0.7);
+        }
+        
+        .hands {
+            background: linear-gradient(135deg, #43e97b, #38f9d7);
+            box-shadow: 0 0 10px rgba(67, 233, 123, 0.7);
+        }
+        
+        .mage {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+            box-shadow: 0 0 10px rgba(142, 68, 173, 0.7);
+        }
+        
+        .titan {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            box-shadow: 0 0 15px rgba(44, 62, 80, 0.9);
+        }
+        
+        .necromancer {
+            background: linear-gradient(135deg, #16a085, #1abc9c);
+            box-shadow: 0 0 10px rgba(22, 160, 133, 0.7);
+        }
+        
+        .warrior {
+            background: linear-gradient(135deg, #ff9500, #ff3300);
+            box-shadow: 0 0 10px rgba(255, 149, 0, 0.7);
+        }
+        
+        .clone {
+            background: linear-gradient(135deg, #1abc9c, #16a085);
+            box-shadow: 0 0 5px rgba(22, 160, 133, 0.5);
+            opacity: 0.8;
+        }
+        
+        .weapon {
+            position: absolute;
+            transform-origin: center;
+            font-size: 24px;
+            filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.7));
+        }
+        
+        .fireball {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, #ff9500, #ff3300);
+            box-shadow: 0 0 20px rgba(255, 149, 0, 0.8);
+            animation: fireballPulse 1s infinite, fireballMove 0.5s linear;
+        }
+        
+        @keyframes fireballPulse {
+            0% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 149, 0, 0.8); }
+            50% { transform: scale(1.1); box-shadow: 0 0 30px rgba(255, 149, 0, 1); }
+            100% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 149, 0, 0.8); }
+        }
+        
+        @keyframes fireballMove {
+            0% { background: radial-gradient(circle, #ff9500, #ff3300); }
+            100% { background: radial-gradient(circle, #ff3300, #ff9500); }
+        }
+        
+        .damage-indicator {
+            position: absolute;
+            color: #ff3333;
+            font-weight: bold;
+            font-size: 18px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+            animation: floatUp 1s ease-out forwards;
+            z-index: 10;
+        }
+        
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+        }
+        
+        .game-over {
+            display: none;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            margin-top: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            animation: gameOverAppear 0.5s ease-out;
+            width: 100%;
+            max-width: 600px;
+        }
+        
+        @keyframes gameOverAppear {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .winner-text {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: #ffcc00;
+            text-shadow: 0 0 10px rgba(255, 204, 0, 0.7);
+            animation: winnerGlow 2s infinite alternate;
+        }
+        
+        @keyframes winnerGlow {
+            0% { text-shadow: 0 0 10px rgba(255, 204, 0, 0.7); }
+            100% { text-shadow: 0 0 20px rgba(255, 204, 0, 1); }
+        }
+        
+        .restart-btn {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: bold;
+            padding: 12px 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 242, 254, 0.4);
+        }
+        
+        .restart-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 7px 20px rgba(0, 242, 254, 0.6);
+        }
+        
+        .selected-count {
+            margin-top: 15px;
+            font-size: 1rem;
+        }
+        
+        .damage-counter {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #ffcc00;
+        }
+        
+        .clone-indicator {
+            position: absolute;
+            color: #1abc9c;
+            font-size: 14px;
+            animation: cloneFloat 2s ease-out forwards;
+            z-index: 10;
+        }
+        
+        @keyframes cloneFloat {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+        }
+        
+        .volume-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .volume-control label {
+            font-size: 0.9rem;
+            min-width: 80px;
+        }
+        
+        .volume-control input {
+            width: 100px;
+        }
+        
+        .mobile-notice {
+            display: none;
+            background: rgba(255, 204, 0, 0.2);
+            border: 1px solid #ffcc00;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+        
+        /* Адаптивность для мобильных устройств */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .subtitle {
+                font-size: 1rem;
+            }
+            
+            .selection-screen {
+                padding: 20px;
+            }
+            
+            .balls-container {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .ball-preview {
+                width: 100px;
+                height: 100px;
+                font-size: 40px;
+            }
+            
+            .ball-name {
+                font-size: 1.2rem;
+            }
+            
+            .ball-stats {
+                font-size: 0.9rem;
+            }
+            
+            .volume-controls {
+                position: relative;
+                top: auto;
+                right: auto;
+                margin-bottom: 20px;
+                width: 100%;
+                max-width: 300px;
+            }
+            
+            .health-bar {
+                min-width: 100%;
+            }
+            
+            .mobile-notice {
+                display: block;
+            }
+            
+            .game-over {
+                padding: 20px;
+            }
+            
+            .winner-text {
+                font-size: 1.5rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.7rem;
+            }
+            
+            .ball-preview {
+                width: 80px;
+                height: 80px;
+                font-size: 30px;
+            }
+            
+            .weapon-icon {
+                font-size: 35px;
+            }
+            
+            .fireball-preview {
+                width: 25px;
+                height: 25px;
+            }
+            
+            .start-btn, .restart-btn {
+                padding: 12px 25px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚔️ БИТВА ШАРОВ ⚔️</h1>
+        <p class="subtitle">Выберите двух бойцов и наблюдайте за эпическим сражением!</p>
+        
+        <div class="mobile-notice">
+            💡 На мобильных устройствах игра автоматически адаптируется под размер экрана
+        </div>
+        
+        <!-- Панель управления звуком -->
+        <div class="volume-controls">
+            <div class="volume-control">
+                <label for="musicVolume">Музыка:</label>
+                <input type="range" id="musicVolume" min="0" max="1" step="0.1" value="0.5">
+            </div>
+            <div class="volume-control">
+                <label for="sfxVolume">Звуки:</label>
+                <input type="range" id="sfxVolume" min="0" max="1" step="0.1" value="0.5">
+            </div>
+        </div>
+        
+        <!-- Экран выбора -->
+        <div class="selection-screen" id="selectionScreen">
+            <p class="instructions">Выберите двух бойцов для сражения. Каждый имеет уникальные характеристики:</p>
+            
+            <div class="balls-container">
+                <div class="ball-option" data-type="sword">
+                    <div class="ball-preview sword-ball rotating">
+                        <div class="weapon-icon">⚔️</div>
+                    </div>
+                    <div class="ball-name">Шар с Мечом</div>
+                    <div class="ball-stats">Начальный урон: 50<br>Увеличивается на 10 за удар<br>Здоровье: 1000</div>
+                    <div class="damage-counter" id="swordDamage">Текущий урон: 50</div>
+                </div>
+                
+                <div class="ball-option" data-type="spear">
+                    <div class="ball-preview spear-ball rotating">
+                        <div class="weapon-icon">🔱</div>
+                    </div>
+                    <div class="ball-name">Шар с Копьем</div>
+                    <div class="ball-stats">Урон: 90<br>Очень быстрый<br>Здоровье: 1000</div>
+                </div>
+                
+                <div class="ball-option" data-type="hands">
+                    <div class="ball-preview hands-ball rotating">✊</div>
+                    <div class="ball-name">Шар с Руками</div>
+                    <div class="ball-stats">Урон: 200<br>Здоровье: 1000</div>
+                </div>
+                
+                <div class="ball-option" data-type="mage">
+                    <div class="ball-preview mage-ball">
+                        <div class="fireball-preview"></div>
+                    </div>
+                    <div class="ball-name">Маг</div>
+                    <div class="ball-stats">Огненный шар: 100 урона<br>Выстрел каждые 3 секунды<br>Здоровье: 1000</div>
+                </div>
+                
+                <div class="ball-option" data-type="titan">
+                    <div class="ball-preview titan-ball rotating">💎</div>
+                    <div class="ball-name">Титан</div>
+                    <div class="ball-stats">Урон: 150<br>Здоровье: 2000<br>Защищенный</div>
+                </div>
+                
+                <div class="ball-option" data-type="necromancer">
+                    <div class="ball-preview necromancer-ball rotating">👻</div>
+                    <div class="ball-name">Некромант</div>
+                    <div class="ball-stats">Урон: 70<br>Создает клона каждые 5 сек<br>Клон: 50 урона, 1 здоровье<br>Здоровье: 1000</div>
+                </div>
+                
+                <div class="ball-option" data-type="warrior">
+                    <div class="ball-preview warrior-ball rotating">🛡️</div>
+                    <div class="ball-name">Воин</div>
+                    <div class="ball-stats">Урон: 80<br>Щит блокирует 50% урона<br>Здоровье: 1200</div>
+                </div>
+            </div>
+            
+            <p class="selected-count" id="selectedCount">Выбрано: 0/2</p>
+            <button class="start-btn" id="startBtn" disabled>НАЧАТЬ БИТВУ</button>
+        </div>
+        
+        <!-- Игровое поле -->
+        <div class="game-screen" id="gameScreen">
+            <div class="health-bars">
+                <div class="health-bar">
+                    <div class="health-fill sword" id="health1" style="width: 100%"></div>
+                    <div class="health-text" id="healthText1">Меч: 1000</div>
+                </div>
+                <div class="health-bar">
+                    <div class="health-fill spear" id="health2" style="width: 100%"></div>
+                    <div class="health-text" id="healthText2">Копье: 1000</div>
+                </div>
+            </div>
+            
+            <div class="arena-container">
+                <div class="arena" id="arena">
+                    <!-- Шары и оружие будут добавлены с помощью JavaScript -->
+                </div>
+            </div>
+            
+            <div class="game-over" id="gameOver">
+                <div class="winner-text" id="winnerText"></div>
+                <button class="restart-btn" id="restartBtn">ИГРАТЬ СНОВА</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Элементы DOM
+        const selectionScreen = document.getElementById('selectionScreen');
+        const gameScreen = document.getElementById('gameScreen');
+        const arena = document.getElementById('arena');
+        const startBtn = document.getElementById('startBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const gameOver = document.getElementById('gameOver');
+        const winnerText = document.getElementById('winnerText');
+        const selectedCount = document.getElementById('selectedCount');
+        const health1 = document.getElementById('health1');
+        const health2 = document.getElementById('health2');
+        const healthText1 = document.getElementById('healthText1');
+        const healthText2 = document.getElementById('healthText2');
+        const swordDamage = document.getElementById('swordDamage');
+        const musicVolume = document.getElementById('musicVolume');
+        const sfxVolume = document.getElementById('sfxVolume');
+        
+        // Переменные игры
+        let selectedBalls = [];
+        let balls = [];
+        let weapons = [];
+        let fireballs = [];
+        let clones = [];
+        let gameRunning = false;
+        let animationId;
+        let backgroundMusic;
+        
+        // Инициализация аудио
+        function initAudio() {
+            // Создаем элемент для фоновой музыки
+            backgroundMusic = new Audio();
+            // Для демонстрации используем базовые осцилляторы вместо файлов
+            // В реальном проекте здесь должен быть URL вашей музыки
+            backgroundMusic.volume = musicVolume.value;
+            
+            // Обработчики изменения громкости
+            musicVolume.addEventListener('input', () => {
+                backgroundMusic.volume = musicVolume.value;
+            });
+            
+            sfxVolume.addEventListener('input', () => {
+                // Громкость звуковых эффектов будет регулироваться в функции playSound
+            });
+        }
+        
+        // Функция для создания звуков
+        function playSound(frequency, duration, type = 'sine', volume = 0.3) {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.type = type;
+                oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+                
+                // Применяем настройки громкости из ползунка
+                const adjustedVolume = volume * sfxVolume.value;
+                gainNode.gain.setValueAtTime(adjustedVolume, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + duration);
+            } catch (e) {
+                console.log("Аудио не поддерживается");
+            }
+        }
+        
+        // Звуки для различных событий
+        const sounds = {
+            weaponClash: () => playSound(800, 0.3, 'sine', 0.3),
+            damage: () => playSound(200, 0.2, 'sawtooth', 0.2),
+            fireball: () => playSound(400, 0.5, 'square', 0.3),
+            clone: () => playSound(600, 0.4, 'triangle', 0.3),
+            win: () => {
+                playSound(523, 0.2, 'sine', 0.3);
+                setTimeout(() => playSound(659, 0.2, 'sine', 0.3), 200);
+                setTimeout(() => playSound(784, 0.3, 'sine', 0.3), 400);
+            }
+        };
+        
+        // Характеристики шаров
+        const ballTypes = {
+            sword: { 
+                name: "Меч", 
+                damage: 50,
+                health: 1000, 
+                color: "sword", 
+                emoji: "⚔️",
+                weaponType: "sword",
+                rotationSpeed: 0.03,
+                currentDamage: 50,
+                rotate: true
+            },
+            spear: { 
+                name: "Копье", 
+                damage: 90, 
+                health: 1000, 
+                color: "spear", 
+                emoji: "🔱",
+                weaponType: "spear",
+                rotationSpeed: 0.08,
+                currentDamage: 90,
+                rotate: true
+            },
+            hands: { 
+                name: "Руки", 
+                damage: 200,
+                health: 1000, 
+                color: "hands", 
+                emoji: "✊",
+                weaponType: null,
+                currentDamage: 200,
+                rotate: true
+            },
+            mage: {
+                name: "Маг",
+                damage: 0, // Маг не наносит урон при столкновении
+                health: 1000,
+                color: "mage",
+                emoji: "🔮",
+                weaponType: "mage",
+                currentDamage: 100, // Урон от огненных шаров
+                lastFireballTime: 0,
+                fireballCooldown: 3000,
+                rotate: false
+            },
+            titan: {
+                name: "Титан",
+                damage: 150, // Сбалансированный урон
+                health: 2000, // Сбалансированное здоровье
+                color: "titan",
+                emoji: "💎",
+                weaponType: null,
+                currentDamage: 150,
+                rotate: true
+            },
+            necromancer: {
+                name: "Некромант",
+                damage: 70,
+                health: 1000,
+                color: "necromancer",
+                emoji: "👻",
+                weaponType: null,
+                currentDamage: 70,
+                lastCloneTime: 0,
+                cloneCooldown: 5000, // 5 секунд вместо 10
+                rotate: true
+            },
+            warrior: {
+                name: "Воин",
+                damage: 80,
+                health: 1200,
+                color: "warrior",
+                emoji: "🛡️",
+                weaponType: null,
+                currentDamage: 80,
+                rotate: true,
+                hasShield: true
+            }
+        };
+        
+        // Выбор шаров
+        document.querySelectorAll('.ball-option').forEach(option => {
+            option.addEventListener('click', () => {
+                const type = option.getAttribute('data-type');
+                
+                // Если шар уже выбран, убираем его из выбора
+                const index = selectedBalls.indexOf(type);
+                if (index !== -1) {
+                    selectedBalls.splice(index, 1);
+                    option.classList.remove('selected');
+                } 
+                // Если шар не выбран и выбрано меньше 2 шаров, добавляем его
+                else if (selectedBalls.length < 2) {
+                    selectedBalls.push(type);
+                    option.classList.add('selected');
+                }
+                
+                // Обновляем счетчик выбранных шаров
+                selectedCount.textContent = `Выбрано: ${selectedBalls.length}/2`;
+                
+                // Активируем или деактивируем кнопку начала игры
+                startBtn.disabled = selectedBalls.length !== 2;
+            });
+        });
+        
+        // Начало игры
+        startBtn.addEventListener('click', startGame);
+        
+        // Перезапуск игры
+        restartBtn.addEventListener('click', () => {
+            gameOver.style.display = 'none';
+            selectionScreen.style.display = 'block';
+            gameScreen.style.display = 'none';
+            selectedBalls = [];
+            document.querySelectorAll('.ball-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            selectedCount.textContent = 'Выбрано: 0/2';
+            startBtn.disabled = true;
+            
+            // Сброс урона меча
+            ballTypes.sword.currentDamage = 50;
+            swordDamage.textContent = 'Текущий урон: 50';
+            
+            // Остановка музыки
+            if (backgroundMusic) {
+                backgroundMusic.pause();
+                backgroundMusic.currentTime = 0;
+            }
+        });
+        
+        // Функция начала игры
+        function startGame() {
+            selectionScreen.style.display = 'none';
+            gameScreen.style.display = 'flex';
+            gameOver.style.display = 'none';
+            
+            // Запуск музыки (если есть)
+            if (backgroundMusic) {
+                backgroundMusic.play().catch(e => {
+                    console.log("Автовоспроизведение заблокировано:", e);
+                });
+            }
+            
+            // Очищаем арену
+            arena.innerHTML = '';
+            balls = [];
+            weapons = [];
+            fireballs = [];
+            clones = [];
+            
+            // Создаем шары
+            selectedBalls.forEach((type, index) => {
+                const ballData = {...ballTypes[type]}; // Копируем данные шара
+                const ball = document.createElement('div');
+                ball.className = `ball ${ballData.color}`;
+                if (ballData.rotate) {
+                    ball.classList.add('rotating');
+                }
+                ball.textContent = ballData.emoji;
+                
+                // Устанавливаем размер шара (100px вместо 50px)
+                const ballSize = 100;
+                ball.style.width = `${ballSize}px`;
+                ball.style.height = `${ballSize}px`;
+                
+                // Случайная позиция на арене
+                const maxX = arena.offsetWidth - ballSize;
+                const maxY = arena.offsetHeight - ballSize;
+                const x = Math.random() * maxX;
+                const y = Math.random() * maxY;
+                
+                ball.style.left = `${x}px`;
+                ball.style.top = `${y}px`;
+                
+                // Добавляем данные шара
+                ball.ballData = {
+                    type: type,
+                    name: ballData.name,
+                    health: ballData.health,
+                    maxHealth: ballData.health,
+                    damage: ballData.currentDamage,
+                    x: x,
+                    y: y,
+                    // Увеличиваем скорость (8 вместо 6)
+                    dx: (Math.random() - 0.5) * 8,
+                    dy: (Math.random() - 0.5) * 8,
+                    size: ballSize,
+                    weaponType: ballData.weaponType,
+                    rotationSpeed: ballData.rotationSpeed,
+                    currentDamage: ballData.currentDamage,
+                    lastFireballTime: ballData.lastFireballTime,
+                    fireballCooldown: ballData.fireballCooldown,
+                    lastCloneTime: ballData.lastCloneTime,
+                    cloneCooldown: ballData.cloneCooldown,
+                    rotate: ballData.rotate,
+                    hasShield: ballData.hasShield || false
+                };
+                
+                // Добавляем шар на арену
+                arena.appendChild(ball);
+                balls.push(ball);
+                
+                // Создаем оружие, если есть
+                if (ballData.weaponType && ballData.weaponType !== 'mage') {
+                    const weapon = document.createElement('div');
+                    weapon.className = `weapon`;
+                    weapon.textContent = ballData.emoji;
+                    
+                    // Позиционируем оружие относительно шара
+                    weapon.style.left = `${ballSize/2 - 10}px`;
+                    weapon.style.top = `${ballSize/2 - 10}px`;
+                    
+                    // Добавляем оружие в шар
+                    ball.appendChild(weapon);
+                    
+                    // Сохраняем ссылку на оружие
+                    ball.weapon = weapon;
+                    weapons.push(weapon);
+                }
+                
+                // Обновляем полосы здоровья
+                if (index === 0) {
+                    health1.className = `health-fill ${ballData.color}`;
+                    health1.style.width = '100%';
+                    healthText1.textContent = `${ballData.name}: ${ballData.health}`;
+                } else {
+                    health2.className = `health-fill ${ballData.color}`;
+                    health2.style.width = '100%';
+                    healthText2.textContent = `${ballData.name}: ${ballData.health}`;
+                }
+            });
+            
+            // Запускаем игровой цикл
+            gameRunning = true;
+            animationId = requestAnimationFrame(gameLoop);
+        }
+        
+        // Игровой цикл
+        function gameLoop() {
+            if (!gameRunning) return;
+            
+            // Перемещаем шары
+            balls.forEach(ball => {
+                const data = ball.ballData;
+                
+                // Обновляем позицию
+                data.x += data.dx;
+                data.y += data.dy;
+                
+                // Проверяем столкновение с границами
+                if (data.x <= 0 || data.x >= arena.offsetWidth - data.size) {
+                    data.dx = -data.dx;
+                    data.x = data.x <= 0 ? 0 : arena.offsetWidth - data.size;
+                }
+                
+                if (data.y <= 0 || data.y >= arena.offsetHeight - data.size) {
+                    data.dy = -data.dy;
+                    data.y = data.y <= 0 ? 0 : arena.offsetHeight - data.size;
+                }
+                
+                // Применяем новую позицию
+                ball.style.left = `${data.x}px`;
+                ball.style.top = `${data.y}px`;
+                
+                // Для мага - стрельба огненными шарами
+                if (data.type === 'mage') {
+                    const currentTime = Date.now();
+                    if (currentTime - data.lastFireballTime > data.fireballCooldown) {
+                        createFireball(ball);
+                        data.lastFireballTime = currentTime;
+                        sounds.fireball();
+                    }
+                }
+                
+                // Для некроманта - создание клонов
+                if (data.type === 'necromancer') {
+                    const currentTime = Date.now();
+                    if (currentTime - data.lastCloneTime > data.cloneCooldown) {
+                        createClone(ball);
+                        data.lastCloneTime = currentTime;
+                        sounds.clone();
+                    }
+                }
+            });
+            
+            // Перемещаем огненные шары
+            moveFireballs();
+            
+            // Перемещаем клонов
+            moveClones();
+            
+            // Проверяем столкновения между шарами
+            checkCollisions();
+            
+            // Проверяем столкновения огненных шаров с шарами
+            checkFireballCollisions();
+            
+            // Проверяем столкновения клонов с шарами
+            checkCloneCollisions();
+            
+            // Проверяем условие окончания игры
+            checkGameEnd();
+            
+            // Продолжаем игровой цикл
+            animationId = requestAnimationFrame(gameLoop);
+        }
+        
+        // Создание огненного шара
+        function createFireball(mageBall) {
+            const mageData = mageBall.ballData;
+            const targetBall = balls.find(ball => ball !== mageBall);
+            
+            if (!targetBall) return;
+            
+            const targetData = targetBall.ballData;
+            
+            const fireball = document.createElement('div');
+            fireball.className = 'fireball';
+            
+            // Размер огненного шара (увеличен в 2 раза)
+            const fireballSize = 60;
+            fireball.style.width = `${fireballSize}px`;
+            fireball.style.height = `${fireballSize}px`;
+            
+            // Позиция огненного шара - рядом с магом
+            const fireballX = mageData.x + mageData.size/2 - fireballSize/2;
+            const fireballY = mageData.y + mageData.size/2 - fireballSize/2;
+            
+            fireball.style.left = `${fireballX}px`;
+            fireball.style.top = `${fireballY}px`;
+            
+            // Направление к цели
+            const dx = (targetData.x + targetData.size/2) - (mageData.x + mageData.size/2);
+            const dy = (targetData.y + targetData.size/2) - (mageData.y + mageData.size/2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // Скорость огненного шара
+            const speed = 5;
+            const vx = (dx / distance) * speed;
+            const vy = (dy / distance) * speed;
+            
+            // Добавляем огненный шар на арену
+            arena.appendChild(fireball);
+            
+            // Сохраняем данные огненного шара
+            fireballs.push({
+                element: fireball,
+                x: fireballX,
+                y: fireballY,
+                vx: vx,
+                vy: vy,
+                size: fireballSize,
+                damage: mageData.currentDamage, // Урон от огненного шара
+                owner: mageBall
+            });
+        }
+        
+        // Перемещение огненных шаров
+        function moveFireballs() {
+            for (let i = fireballs.length - 1; i >= 0; i--) {
+                const fireball = fireballs[i];
+                
+                // Обновляем позицию
+                fireball.x += fireball.vx;
+                fireball.y += fireball.vy;
+                
+                // Применяем новую позицию
+                fireball.element.style.left = `${fireball.x}px`;
+                fireball.element.style.top = `${fireball.y}px`;
+                
+                // Проверяем выход за границы арены
+                if (fireball.x < 0 || fireball.x > arena.offsetWidth || 
+                    fireball.y < 0 || fireball.y > arena.offsetHeight) {
+                    arena.removeChild(fireball.element);
+                    fireballs.splice(i, 1);
+                }
+            }
+        }
+        
+        // Создание клона
+        function createClone(necromancerBall) {
+            const necromancerData = necromancerBall.ballData;
+            
+            const clone = document.createElement('div');
+            clone.className = 'ball clone';
+            
+            // Размер клона (увеличен в 2 раза)
+            const cloneSize = 60;
+            clone.style.width = `${cloneSize}px`;
+            clone.style.height = `${cloneSize}px`;
+            
+            // Позиция клона - рядом с некромантом
+            const cloneX = necromancerData.x + (Math.random() - 0.5) * 100;
+            const cloneY = necromancerData.y + (Math.random() - 0.5) * 100;
+            
+            // Ограничиваем позицию в пределах арены
+            const maxX = arena.offsetWidth - cloneSize;
+            const maxY = arena.offsetHeight - cloneSize;
+            const x = Math.max(0, Math.min(cloneX, maxX));
+            const y = Math.max(0, Math.min(cloneY, maxY));
+            
+            clone.style.left = `${x}px`;
+            clone.style.top = `${y}px`;
+            
+            // Добавляем клон на арену
+            arena.appendChild(clone);
+            
+            // Создаем индикатор появления клона
+            const indicator = document.createElement('div');
+            indicator.className = 'clone-indicator';
+            indicator.textContent = 'Клон!';
+            indicator.style.left = `${x}px`;
+            indicator.style.top = `${y}px`;
+            arena.appendChild(indicator);
+            
+            // Удаляем индикатор после анимации
+            setTimeout(() => {
+                if (indicator.parentNode) {
+                    arena.removeChild(indicator);
+                }
+            }, 2000);
+            
+            // Добавляем данные клона
+            const cloneData = {
+                element: clone,
+                x: x,
+                y: y,
+                dx: (Math.random() - 0.5) * 4,
+                dy: (Math.random() - 0.5) * 4,
+                size: cloneSize,
+                damage: 50, // Урон клона
+                health: 1, // Здоровье клона
+                owner: necromancerBall
+            };
+            
+            clones.push(cloneData);
+        }
+        
+        // Перемещение клонов
+        function moveClones() {
+            for (let i = clones.length - 1; i >= 0; i--) {
+                const clone = clones[i];
+                
+                // Обновляем позицию
+                clone.x += clone.dx;
+                clone.y += clone.dy;
+                
+                // Проверяем столкновение с границами
+                if (clone.x <= 0 || clone.x >= arena.offsetWidth - clone.size) {
+                    clone.dx = -clone.dx;
+                    clone.x = clone.x <= 0 ? 0 : arena.offsetWidth - clone.size;
+                }
+                
+                if (clone.y <= 0 || clone.y >= arena.offsetHeight - clone.size) {
+                    clone.dy = -clone.dy;
+                    clone.y = clone.y <= 0 ? 0 : arena.offsetHeight - clone.size;
+                }
+                
+                // Применяем новую позицию
+                clone.element.style.left = `${clone.x}px`;
+                clone.element.style.top = `${clone.y}px`;
+            }
+        }
+        
+        // Проверка столкновений огненных шаров с шарами
+        function checkFireballCollisions() {
+            for (let i = fireballs.length - 1; i >= 0; i--) {
+                const fireball = fireballs[i];
+                
+                for (let j = 0; j < balls.length; j++) {
+                    const ball = balls[j];
+                    const ballData = ball.ballData;
+                    
+                    // Пропускаем, если это владелец огненного шара
+                    if (ball === fireball.owner) continue;
+                    
+                    // Расстояние между центрами огненного шара и шара
+                    const dx = (fireball.x + fireball.size/2) - (ballData.x + ballData.size/2);
+                    const dy = (fireball.y + fireball.size/2) - (ballData.y + ballData.size/2);
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    // Если огненный шар касается шара
+                    if (distance < fireball.size/2 + ballData.size/2) {
+                        // Наносим урон
+                        let actualDamage = fireball.damage;
+                        
+                        // Проверяем, есть ли у цели щит
+                        if (ballData.hasShield && Math.random() < 0.5) {
+                            actualDamage = Math.floor(actualDamage * 0.5); // Щит блокирует 50% урона
+                        }
+                        
+                        ballData.health -= actualDamage;
+                        
+                        // Создаем индикатор урона
+                        createDamageIndicator(ball, actualDamage);
+                        
+                        // Удаляем огненный шар
+                        arena.removeChild(fireball.element);
+                        fireballs.splice(i, 1);
+                        
+                        // Обновляем полосы здоровья
+                        updateHealthBars();
+                        
+                        // Визуальная обратная связь
+                        ball.style.transform = 'scale(1.2)';
+                        setTimeout(() => {
+                            if (ball.parentNode) ball.style.transform = '';
+                        }, 200);
+                        
+                        // Воспроизводим звук урона
+                        sounds.damage();
+                        
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Проверка столкновений клонов с шарами
+        function checkCloneCollisions() {
+            for (let i = clones.length - 1; i >= 0; i--) {
+                const clone = clones[i];
+                
+                for (let j = 0; j < balls.length; j++) {
+                    const ball = balls[j];
+                    const ballData = ball.ballData;
+                    
+                    // Пропускаем, если это владелец клона
+                    if (ball === clone.owner) continue;
+                    
+                    // Расстояние между центрами клона и шара
+                    const dx = (clone.x + clone.size/2) - (ballData.x + ballData.size/2);
+                    const dy = (clone.y + clone.size/2) - (ballData.y + ballData.size/2);
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    // Если клон касается шара
+                    if (distance < clone.size/2 + ballData.size/2) {
+                        // Наносим урон шару
+                        let actualDamage = clone.damage;
+                        
+                        // Проверяем, есть ли у цели щит
+                        if (ballData.hasShield && Math.random() < 0.5) {
+                            actualDamage = Math.floor(actualDamage * 0.5); // Щит блокирует 50% урона
+                        }
+                        
+                        ballData.health -= actualDamage;
+                        
+                        // Клон умирает (здоровье 1)
+                        arena.removeChild(clone.element);
+                        clones.splice(i, 1);
+                        
+                        // Создаем индикатор урона
+                        createDamageIndicator(ball, actualDamage);
+                        
+                        // Обновляем полосы здоровья
+                        updateHealthBars();
+                        
+                        // Визуальная обратная связь
+                        ball.style.transform = 'scale(1.2)';
+                        setTimeout(() => {
+                            if (ball.parentNode) ball.style.transform = '';
+                        }, 200);
+                        
+                        // Воспроизводим звук урона
+                        sounds.damage();
+                        
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Проверка столкновений между шарами
+        function checkCollisions() {
+            if (balls.length < 2) return;
+            
+            const ball1 = balls[0];
+            const ball2 = balls[1];
+            const data1 = ball1.ballData;
+            const data2 = ball2.ballData;
+            
+            // Расстояние между центрами шаров
+            const dx = (data1.x + data1.size/2) - (data2.x + data2.size/2);
+            const dy = (data1.y + data1.size/2) - (data2.y + data2.size/2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // Если шары сталкиваются
+            if (distance < data1.size/2 + data2.size/2) {
+                // Проверяем, есть ли оружие и было ли касание оружием
+                const weaponHit1 = data1.weaponType && checkWeaponHit(ball1, ball2);
+                const weaponHit2 = data2.weaponType && checkWeaponHit(ball2, ball1);
+                
+                // Если оба имеют оружие и они сталкиваются, воспроизводим звук
+                if (weaponHit1 && weaponHit2 && (data1.weaponType === 'sword' || data1.weaponType === 'spear') && 
+                    (data2.weaponType === 'sword' || data2.weaponType === 'spear')) {
+                    sounds.weaponClash();
+                }
+                
+                // Если есть касание оружием, наносим урон
+                if (weaponHit1 && data1.damage > 0) {
+                    applyDamage(ball1, ball2);
+                }
+                
+                if (weaponHit2 && data2.damage > 0) {
+                    applyDamage(ball2, ball1);
+                }
+                
+                // Если у одного из шаров нет оружия, наносим урон при прямом столкновении
+                if (!data1.weaponType || !data2.weaponType) {
+                    if (!data1.weaponType && !weaponHit2 && data1.damage > 0) {
+                        applyDamage(ball1, ball2);
+                    }
+                    if (!data2.weaponType && !weaponHit1 && data2.damage > 0) {
+                        applyDamage(ball2, ball1);
+                    }
+                }
+                
+                // Отскакиваем шары
+                const angle = Math.atan2(dy, dx);
+                const sin = Math.sin(angle);
+                const cos = Math.cos(angle);
+                
+                // Обмениваемся скоростями для эффекта отскока
+                const tempDx = data1.dx;
+                const tempDy = data1.dy;
+                
+                data1.dx = data2.dx * 0.9;
+                data1.dy = data2.dy * 0.9;
+                
+                data2.dx = tempDx * 0.9;
+                data2.dy = tempDy * 0.9;
+                
+                // Немного раздвигаем шары, чтобы избежать залипания
+                const overlap = (data1.size/2 + data2.size/2) - distance;
+                data1.x += cos * overlap/2;
+                data1.y += sin * overlap/2;
+                data2.x -= cos * overlap/2;
+                data2.y -= sin * overlap/2;
+            }
+        }
+        
+        // Проверка, было ли касание оружием
+        function checkWeaponHit(attacker, target) {
+            const attackerData = attacker.ballData;
+            const targetData = target.ballData;
+            
+            // Если у атакующего нет оружия, возвращаем false
+            if (!attackerData.weaponType) return false;
+            
+            // Для простоты считаем, что урон наносится при любом столкновении, если есть оружие
+            return true;
+        }
+        
+        // Применение урона
+        function applyDamage(attacker, target) {
+            const attackerData = attacker.ballData;
+            const targetData = target.ballData;
+            
+            let actualDamage = attackerData.damage;
+            
+            // Проверяем, есть ли у цели щит
+            if (targetData.hasShield && Math.random() < 0.5) {
+                actualDamage = Math.floor(actualDamage * 0.5); // Щит блокирует 50% урона
+            }
+            
+            // Наносим урон
+            targetData.health -= actualDamage;
+            
+            // Для меча увеличиваем урон на 10 после каждого удара
+            if (attackerData.type === 'sword') {
+                attackerData.damage += 10;
+                attackerData.currentDamage += 10;
+                
+                // Обновляем отображение урона меча
+                swordDamage.textContent = `Текущий урон: ${attackerData.currentDamage}`;
+            }
+            
+            // Создаем индикатор урона
+            createDamageIndicator(target, actualDamage);
+            
+            // Обновляем полосы здоровья
+            updateHealthBars();
+            
+            // Визуальная обратная связь
+            target.style.transform = 'scale(1.2)';
+            setTimeout(() => {
+                if (target.parentNode) target.style.transform = '';
+            }, 200);
+            
+            // Воспроизводим звук урона
+            sounds.damage();
+        }
+        
+        // Создание индикатора урона
+        function createDamageIndicator(target, damage) {
+            const indicator = document.createElement('div');
+            indicator.className = 'damage-indicator';
+            indicator.textContent = `-${damage}`;
+            
+            // Позиционируем индикатор над целью
+            const targetData = target.ballData;
+            indicator.style.left = `${targetData.x + targetData.size/2}px`;
+            indicator.style.top = `${targetData.y}px`;
+            
+            // Добавляем индикатор на арену
+            arena.appendChild(indicator);
+            
+            // Удаляем индикатор после анимации
+            setTimeout(() => {
+                if (indicator.parentNode) {
+                    arena.removeChild(indicator);
+                }
+            }, 1000);
+        }
+        
+        // Обновление полос здоровья
+        function updateHealthBars() {
+            const data1 = balls[0].ballData;
+            const data2 = balls[1].ballData;
+            
+            const healthPercent1 = (data1.health / data1.maxHealth) * 100;
+            const healthPercent2 = (data2.health / data2.maxHealth) * 100;
+            
+            health1.style.width = `${Math.max(0, healthPercent1)}%`;
+            health2.style.width = `${Math.max(0, healthPercent2)}%`;
+            
+            healthText1.textContent = `${data1.name}: ${Math.max(0, Math.floor(data1.health))}`;
+            healthText2.textContent = `${data2.name}: ${Math.max(0, Math.floor(data2.health))}`;
+        }
+        
+        // Проверка окончания игры
+        function checkGameEnd() {
+            if (balls.length < 2) return;
+            
+            const data1 = balls[0].ballData;
+            const data2 = balls[1].ballData;
+            
+            // Если у одного из шаров здоровье <= 0
+            if (data1.health <= 0 || data2.health <= 0) {
+                gameRunning = false;
+                cancelAnimationFrame(animationId);
+                
+                // Определяем победителя
+                let winner;
+                if (data1.health > 0 && data2.health <= 0) {
+                    winner = data1;
+                } else if (data2.health > 0 && data1.health <= 0) {
+                    winner = data2;
+                } else {
+                    winner = null; // Ничья
+                }
+                
+                // Показываем экран окончания игры
+                gameOver.style.display = 'block';
+                
+                if (winner) {
+                    winnerText.textContent = `ПОБЕДИЛ ${winner.name.toUpperCase()}!`;
+                    if (winner.type === 'sword') {
+                        winnerText.innerHTML += `<br><span style="font-size: 1rem;">Финальный урон меча: ${winner.damage}</span>`;
+                    }
+                    
+                    // Воспроизводим звук победы
+                    sounds.win();
+                } else {
+                    winnerText.textContent = 'НИЧЬЯ!';
+                }
+            }
+        }
+        
+        // Инициализация при загрузке страницы
+        window.addEventListener('load', () => {
+            initAudio();
+        });
+    </script>
+</body>
+</html>
